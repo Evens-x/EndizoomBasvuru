@@ -58,5 +58,11 @@ namespace EndizoomBasvuru.Repository
         {
             return await _context.SaveChangesAsync();
         }
+
+        // IQueryable erişimi için yeni metot
+        public IQueryable<T> GetQueryable()
+        {
+            return _dbSet;
+        }
     }
 } 

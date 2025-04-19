@@ -12,5 +12,6 @@ namespace EndizoomBasvuru.Repository.Interfaces
         Task DeleteAsync(T entity);
         Task<bool> ExistsAsync(Expression<Func<T, bool>> expression);
         Task<int> SaveChangesAsync();
+        IQueryable<T> GetQueryable();
     }
 } 

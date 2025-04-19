@@ -72,6 +72,15 @@ namespace EndizoomBasvuru.Entity
         public int? CreatedById { get; set; }
         public Admin? CreatedBy { get; set; }
 
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Revenue { get; set; } = 0; // Net Ciro
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal Commission { get; set; } = 0; // Komisyon
+
+        [Column(TypeName = "decimal(18,2)")]
+        public decimal CommissionRate { get; set; } = 0; // Komisyon Oranı (%)
+
         public string? ContractPath { get; set; }
         public string? VisualPath { get; set; }
 

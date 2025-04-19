@@ -535,5 +535,206 @@ namespace EndizoomBasvuru.Services
                 CreatedByName = c.CreatedById.HasValue ? "Admin" : null
             });
         }
+
+        #region İstatistik Metodları
+
+        /// <summary>
+        /// Belirli bir dönem için firma sayısı istatistiklerini getirir
+        /// </summary>
+        public async Task<CompanyCountStatisticsDto> GetCompanyCountStatisticsAsync(StatisticPeriodType periodType, DateTime? date = null)
+        {
+            DateTime referenceDate = date ?? DateTime.UtcNow;
+            DateTime startDate, endDate;
+
+            // Dönem başlangıç ve bitiş tarihlerini belirle
+            if (periodType == StatisticPeriodType.Daily)
+            {
+                startDate = referenceDate.Date;
+                endDate = startDate.AddDays(1).AddSeconds(-1);
+            }
+            else // Monthly
+            {
+                startDate = new DateTime(referenceDate.Year, referenceDate.Month, 1);
+                endDate = startDate.AddMonths(1).AddSeconds(-1);
+            }
+
+            // Firmalar ve yöneticiler için temel sorgu
+            var companies = await _companyRepository.GetQueryable()
+                .Where(c => c.CreatedAt >= startDate && c.CreatedAt <= endDate)
+                .Include(c => c.CreatedBy)
+                .ToListAsync();
+
+            // Toplam firma sayısı
+            int totalCount = companies.Count();
+
+            // Yönetici bazında firma sayıları
+            var detailsByAdmin = companies
+                .Where(c => c.CreatedBy != null)
+                .GroupBy(c => c.CreatedBy!)
+                .Select(g => new AdminCompanyCountDto
+                {
+                    AdminId = g.Key.Id,
+                    AdminName = $"{g.Key.FirstName} {g.Key.LastName}",
+                    AdminRole = g.Key.Role.ToString(),
+                    CompanyCount = g.Count()
+                })
+                .ToList();
+
+            return new CompanyCountStatisticsDto
+            {
+                TotalCount = totalCount,
+                PeriodStart = startDate,
+                PeriodEnd = endDate,
+                DetailsByAdmin = detailsByAdmin
+            };
+        }
+
+        /// <summary>
+        /// Belirli bir dönem için finansal istatistikleri getirir
+        /// </summary>
+        public async Task<FinancialStatisticsDto> GetFinancialStatisticsAsync(StatisticPeriodType periodType, DateTime? date = null)
+        {
+            DateTime referenceDate = date ?? DateTime.UtcNow;
+            DateTime startDate, endDate;
+
+            // Dönem başlangıç ve bitiş tarihlerini belirle
+            if (periodType == StatisticPeriodType.Daily)
+            {
+                startDate = referenceDate.Date;
+                endDate = startDate.AddDays(1).AddSeconds(-1);
+            }
+            else // Monthly
+            {
+                startDate = new DateTime(referenceDate.Year, referenceDate.Month, 1);
+                endDate = startDate.AddMonths(1).AddSeconds(-1);
+            }
+
+            // Firmalar ve yöneticiler için temel sorgu
+            var companies = await _companyRepository.GetQueryable()
+                .Where(c => c.CreatedAt >= startDate && c.CreatedAt <= endDate)
+                .Include(c => c.CreatedBy)
+                .ToListAsync();
+
+            // Toplam ciro ve komisyon
+            decimal totalRevenue = companies.Sum(c => c.Revenue);
+            decimal totalCommission = companies.Sum(c => c.Commission);
+
+            // Yönetici bazında finansal veriler
+            var detailsByAdmin = companies
+                .Where(c => c.CreatedBy != null)
+                .GroupBy(c => c.CreatedBy!)
+                .Select(g => new AdminFinancialStatisticsDto
+                {
+                    AdminId = g.Key.Id,
+                    AdminName = $"{g.Key.FirstName} {g.Key.LastName}",
+                    AdminRole = g.Key.Role.ToString(),
+                    Revenue = g.Sum(c => c.Revenue),
+                    Commission = g.Sum(c => c.Commission)
+                })
+                .ToList();
+
+            return new FinancialStatisticsDto
+            {
+                TotalRevenue = totalRevenue,
+                TotalCommission = totalCommission,
+                PeriodStart = startDate,
+                PeriodEnd = endDate,
+                DetailsByAdmin = detailsByAdmin
+            };
+        }
+
+        /// <summary>
+        /// En son eklenen firmaları getirir
+        /// </summary>
+        public async Task<RecentCompaniesDto> GetRecentCompaniesAsync(int count = 10)
+        {
+            var companies = await _companyRepository.GetQueryable()
+                .OrderByDescending(c => c.CreatedAt)
+                .Take(count)
+                .Include(c => c.CreatedBy)
+                .ToListAsync();
+
+            var result = new RecentCompaniesDto
+            {
+                Companies = companies.Select(c => new CompanyListItemDto
+                {
+                    Id = c.Id,
+                    Name = c.Name ?? string.Empty,
+                    Email = c.Email,
+                    CreatedAt = c.CreatedAt,
+                    Status = c.ConnectionStatus.ToString(),
+                    Revenue = c.Revenue,
+                    Commission = c.Commission,
+                    AdminName = c.CreatedBy != null ? $"{c.CreatedBy.FirstName} {c.CreatedBy.LastName}" : "Sistem"
+                }),
+                TotalCount = companies.Count()
+            };
+
+            return result;
+        }
+
+        /// <summary>
+        /// Son X gün içinde eklenen firmaları getirir
+        /// </summary>
+        public async Task<RecentCompaniesDto> GetNewCompaniesAsync(int days = 7, int count = 10)
+        {
+            var startDate = DateTime.UtcNow.AddDays(-days).Date;
+            
+            var companies = await _companyRepository.GetQueryable()
+                .Where(c => c.CreatedAt >= startDate)
+                .OrderByDescending(c => c.CreatedAt)
+                .Take(count)
+                .Include(c => c.CreatedBy)
+                .ToListAsync();
+
+            var result = new RecentCompaniesDto
+            {
+                Companies = companies.Select(c => new CompanyListItemDto
+                {
+                    Id = c.Id,
+                    Name = c.Name ?? string.Empty,
+                    Email = c.Email,
+                    CreatedAt = c.CreatedAt,
+                    Status = c.ConnectionStatus.ToString(),
+                    Revenue = c.Revenue,
+                    Commission = c.Commission,
+                    AdminName = c.CreatedBy != null ? $"{c.CreatedBy.FirstName} {c.CreatedBy.LastName}" : "Sistem"
+                }),
+                TotalCount = companies.Count()
+            };
+
+            return result;
+        }
+
+        /// <summary>
+        /// Onay bekleyen firmaları getirir
+        /// </summary>
+        public async Task<PendingCompaniesDto> GetPendingCompaniesAsync(int count = 10)
+        {
+            var companies = await _companyRepository.GetQueryable()
+                .Where(c => c.ConnectionStatus == CompanyConnectionStatus.Pending)
+                .OrderByDescending(c => c.CreatedAt)
+                .Take(count)
+                .Include(c => c.CreatedBy)
+                .ToListAsync();
+
+            var result = new PendingCompaniesDto
+            {
+                Companies = companies.Select(c => new CompanyListItemDto
+                {
+                    Id = c.Id,
+                    Name = c.Name ?? string.Empty,
+                    Email = c.Email,
+                    CreatedAt = c.CreatedAt,
+                    Status = c.ConnectionStatus.ToString(),
+                    AdminName = c.CreatedBy != null ? $"{c.CreatedBy.FirstName} {c.CreatedBy.LastName}" : "Sistem"
+                }),
+                TotalCount = companies.Count()
+            };
+
+            return result;
+        }
+
+        #endregion
     }
 } 

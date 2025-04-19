@@ -21,5 +21,12 @@ namespace EndizoomBasvuru.Services.Interfaces
         Task<string> AddCompanyContractAsync(int companyId, IFormFile contract);
         Task<IEnumerable<Company>> FindByEmailAsync(string email);
         Task<CompanyLoginResponseDto?> ResetPasswordAsync(ResetPasswordDto model);
+
+        // Yeni İstatistik Metodları
+        Task<CompanyCountStatisticsDto> GetCompanyCountStatisticsAsync(StatisticPeriodType periodType, DateTime? date = null);
+        Task<FinancialStatisticsDto> GetFinancialStatisticsAsync(StatisticPeriodType periodType, DateTime? date = null);
+        Task<RecentCompaniesDto> GetRecentCompaniesAsync(int count = 10);
+        Task<RecentCompaniesDto> GetNewCompaniesAsync(int days = 7, int count = 10);
+        Task<PendingCompaniesDto> GetPendingCompaniesAsync(int count = 10);
     }
 } 

@@ -251,4 +251,92 @@ namespace EndizoomBasvuru.Services.Models
         [Compare("NewPassword", ErrorMessage = "Şifreler eşleşmiyor.")]
         public string ConfirmPassword { get; set; } = null!;
     }
+
+    /// <summary>
+    /// İstatistik Dönem Tipi
+    /// </summary>
+    public enum StatisticPeriodType
+    {
+        Daily,
+        Monthly
+    }
+
+    /// <summary>
+    /// Firma sayısı istatistikleri DTO
+    /// </summary>
+    public class CompanyCountStatisticsDto
+    {
+        public int TotalCount { get; set; }
+        public DateTime PeriodStart { get; set; }
+        public DateTime PeriodEnd { get; set; }
+        public IEnumerable<AdminCompanyCountDto> DetailsByAdmin { get; set; } = new List<AdminCompanyCountDto>();
+    }
+
+    /// <summary>
+    /// Yönetici bazında firma sayıları
+    /// </summary>
+    public class AdminCompanyCountDto
+    {
+        public int AdminId { get; set; }
+        public string AdminName { get; set; } = string.Empty;
+        public string AdminRole { get; set; } = string.Empty;
+        public int CompanyCount { get; set; }
+    }
+
+    /// <summary>
+    /// Finansal istatistik DTO
+    /// </summary>
+    public class FinancialStatisticsDto
+    {
+        public decimal TotalRevenue { get; set; }
+        public decimal TotalCommission { get; set; }
+        public DateTime PeriodStart { get; set; }
+        public DateTime PeriodEnd { get; set; }
+        public IEnumerable<AdminFinancialStatisticsDto> DetailsByAdmin { get; set; } = new List<AdminFinancialStatisticsDto>();
+    }
+
+    /// <summary>
+    /// Yönetici bazında finansal istatistikler
+    /// </summary>
+    public class AdminFinancialStatisticsDto
+    {
+        public int AdminId { get; set; }
+        public string AdminName { get; set; } = string.Empty;
+        public string AdminRole { get; set; } = string.Empty;
+        public decimal Revenue { get; set; }
+        public decimal Commission { get; set; }
+    }
+
+    /// <summary>
+    /// En son eklenen firmalar DTO
+    /// </summary>
+    public class RecentCompaniesDto
+    {
+        public IEnumerable<CompanyListItemDto> Companies { get; set; } = new List<CompanyListItemDto>();
+        public int TotalCount { get; set; }
+    }
+
+    /// <summary>
+    /// Onay bekleyen firmalar DTO
+    /// </summary>
+    public class PendingCompaniesDto
+    {
+        public IEnumerable<CompanyListItemDto> Companies { get; set; } = new List<CompanyListItemDto>();
+        public int TotalCount { get; set; }
+    }
+
+    /// <summary>
+    /// Firma Liste Öğesi DTO
+    /// </summary>
+    public class CompanyListItemDto
+    {
+        public int Id { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty;
+        public DateTime CreatedAt { get; set; }
+        public string Status { get; set; } = string.Empty;
+        public decimal Revenue { get; set; }
+        public decimal Commission { get; set; }
+        public string AdminName { get; set; } = string.Empty;
+    }
 } 
