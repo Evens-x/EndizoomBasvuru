@@ -24,7 +24,8 @@ namespace EndizoomBasvuru.Services
                 new Claim(ClaimTypes.Email, company.Email),
                 new Claim(ClaimTypes.Name, $"{company.ContactFirstName} {company.ContactLastName}"),
                 new Claim("CompanyName", company.Name),
-                new Claim(ClaimTypes.Role, UserRole.Company.ToString())
+                new Claim(ClaimTypes.Role, UserRole.Company.ToString()),
+                new Claim("role", UserRole.Company.ToString())
             };
 
             return GenerateToken(claims);
@@ -32,13 +33,26 @@ namespace EndizoomBasvuru.Services
 
         public string GenerateAdminToken(Admin admin)
         {
+            var roleName = admin.Role.ToString();
+            
             var claims = new List<Claim>
             {
                 new Claim(ClaimTypes.NameIdentifier, admin.Id.ToString()),
                 new Claim(ClaimTypes.Email, admin.Email),
                 new Claim(ClaimTypes.Name, $"{admin.FirstName} {admin.LastName}"),
-                new Claim(ClaimTypes.Role, admin.Role.ToString())
+                new Claim(ClaimTypes.Role, roleName),
+                new Claim("role", roleName),
+                new Claim("admin_role", roleName)
             };
+
+            if (roleName == UserRole.Admin.ToString())
+            {
+                claims.Add(new Claim("is_admin", "true"));
+            } 
+            else if (roleName == UserRole.Marketing.ToString())
+            {
+                claims.Add(new Claim("is_marketing", "true"));
+            }
 
             return GenerateToken(claims);
         }
@@ -47,7 +61,8 @@ namespace EndizoomBasvuru.Services
         {
             var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? "EndizoomDefaultSecureKeyForDevelopment1234"));
             var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
-            var expires = DateTime.Now.AddDays(1);
+            
+            var expires = DateTime.Now.AddDays(30);
 
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:Issuer"],

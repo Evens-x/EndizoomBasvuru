@@ -120,10 +120,14 @@ namespace EndizoomBasvuru.Controllers
             }
         }
 
-        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Marketing)}")]
-        [HttpGet]
+        [Authorize(Policy = "AdminOrMarketing")]
+        [HttpGet("Get-All-Companies")]
         public async Task<IActionResult> GetAllCompanies()
         {
+            // Developer hata ayıklama için rol bilgisi kontrolü
+            var userRoles = User.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            Console.WriteLine($"User Roles: {string.Join(", ", userRoles)}");
+            
             var companies = await _companyService.GetAllCompaniesAsync();
             return Ok(companies);
         }

@@ -13,6 +13,8 @@ using Microsoft.Extensions.FileProviders;
 using Microsoft.AspNetCore.Diagnostics;
 using System.Net;
 using Microsoft.Extensions.Logging;
+using Swashbuckle.AspNetCore.SwaggerUI;
+using System.Security.Claims;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -66,9 +68,12 @@ builder.Services.AddAuthentication(options =>
 {
     options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
     options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+    options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
 })
 .AddJwtBearer(options =>
 {
+    options.SaveToken = true;
+    options.RequireHttpsMetadata = false; // Geliştirme ortamında false olabilir
     options.TokenValidationParameters = new TokenValidationParameters
     {
         ValidateIssuer = true,
@@ -78,8 +83,65 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(
-            builder.Configuration["Jwt:Key"] ?? "EndizoomDefaultSecureKeyForDevelopment1234"))
+            builder.Configuration["Jwt:Key"] ?? "EndizoomDefaultSecureKeyForDevelopment1234")),
+        ClockSkew = TimeSpan.Zero, // Token süresi için tolerans sıfır
+        RoleClaimType = ClaimTypes.Role, // Standart .NET role claim type
+        NameClaimType = ClaimTypes.Name
     };
+    
+    // JWT Events
+    options.Events = new JwtBearerEvents
+    {
+        OnAuthenticationFailed = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogError("Authentication failed: {Message}", context.Exception.Message);
+            
+            if (context.Exception.GetType() == typeof(SecurityTokenExpiredException))
+            {
+                context.Response.Headers.Add("Token-Expired", "true");
+            }
+            
+            return Task.CompletedTask;
+        },
+        OnTokenValidated = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogInformation("Token validated successfully");
+            
+            // Rol bilgisini kontrol et
+            var userRoles = context.Principal.FindAll(ClaimTypes.Role).Select(c => c.Value).ToList();
+            logger.LogInformation("User roles: {Roles}", string.Join(", ", userRoles));
+            
+            return Task.CompletedTask;
+        },
+        OnChallenge = context =>
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning("Authorization challenge triggered: {Scheme}", context.Scheme);
+            
+            return Task.CompletedTask;
+        },
+        OnMessageReceived = context => 
+        {
+            var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogInformation("JWT auth message received");
+            
+            return Task.CompletedTask;
+        }
+    };
+});
+
+// Authorization policy'leri tanımla
+builder.Services.AddAuthorization(options =>
+{
+    options.AddPolicy("RequireAdminRole", policy => policy.RequireRole("Admin"));
+    options.AddPolicy("RequireMarketingRole", policy => policy.RequireRole("Marketing"));
+    options.AddPolicy("RequireCompanyRole", policy => policy.RequireRole("Company"));
+    
+    // Admin veya Marketing rolüne sahip olan kullanıcılar için özel bir policy
+    options.AddPolicy("AdminOrMarketing", policy => 
+        policy.RequireRole("Admin", "Marketing"));
 });
 
 // Enable CORS
@@ -132,11 +194,12 @@ builder.Services.AddSwaggerGen(c =>
     // JWT kimlik doğrulaması için Swagger yapılandırması
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header using the Bearer scheme. Enter 'Bearer' [space] and then your token in the text input below. Example: 'Bearer 12345abcdef'",
+        Description = "JWT Authorization header. Sadece token değerini girin, 'Bearer' öneki otomatik eklenecektir.",
         Name = "Authorization",
         In = ParameterLocation.Header,
-        Type = SecuritySchemeType.ApiKey,
-        Scheme = "Bearer"
+        Type = SecuritySchemeType.Http, // Http şeması kullanın 
+        Scheme = "bearer", // Küçük harfle "bearer" şeması tanımlanıyor
+        BearerFormat = "JWT"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -216,6 +279,13 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
         c.SwaggerEndpoint("/swagger/v1/swagger.json", "Endizoom API v1");
         // Swagger UI'ı kök URL'de aç
         c.RoutePrefix = string.Empty;
+        // JWT Token'ı otomatik olarak "Bearer " öneki ile kullan
+        c.OAuthUseBasicAuthenticationWithAccessCodeGrant();
+        c.DisplayRequestDuration();
+        // Her request için token'ı zorunlu kıl
+        c.SupportedSubmitMethods(SubmitMethod.Get, SubmitMethod.Post, SubmitMethod.Put, SubmitMethod.Delete, SubmitMethod.Options, SubmitMethod.Head, SubmitMethod.Patch);
+        // Authorize butonunu her zaman göster
+        c.DocExpansion(DocExpansion.None);
     });
 }
 
@@ -223,7 +293,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 app.UseHttpsRedirection();
 app.UseHsts();
 
-// Enable CORS
+// Enable CORS - CORS'u Authentication'dan önce yapılandır
 app.UseCors("AllowAll");
 
 // Static files için yapılandırma - uploads klasörünü erişilebilir yap
@@ -235,9 +305,37 @@ app.UseStaticFiles(new StaticFileOptions
     RequestPath = "/uploads"
 });
 
-// Authentication & Authorization
-app.UseAuthentication();
-app.UseAuthorization();
+// Authentication & Authorization - sıralama önemli!
+app.UseAuthentication(); // Önce Authentication
+app.UseAuthorization(); // Sonra Authorization
+
+// Daha detaylı hata bilgisi için
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+        
+        // Yetkilendirme hatası sonrası daha detaylı log
+        if (context.Response.StatusCode == 401)
+        {
+            var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+            logger.LogWarning("401 Unauthorized hatası: {Path} yolunda, {Method} metoduyla", context.Request.Path, context.Request.Method);
+            
+            // Header bilgilerini logla
+            foreach (var header in context.Request.Headers)
+            {
+                logger.LogInformation("Header: {Key} = {Value}", header.Key, header.Value);
+            }
+        }
+    }
+    catch (Exception ex)
+    {
+        var logger = context.RequestServices.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "İstek işlenirken beklenmeyen hata");
+        throw;
+    }
+});
 
 app.MapControllers();
 
