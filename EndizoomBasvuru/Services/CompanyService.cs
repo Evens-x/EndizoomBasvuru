@@ -122,13 +122,39 @@ namespace EndizoomBasvuru.Services
         public async Task<IEnumerable<CompanyResponseDto>> GetAllCompaniesAsync()
         {
             var companies = await _companyRepository.GetAllAsync();
+            
+            // Şirketleri ve bağlı verileri içeren daha zengin bir yanıt oluştur
             return companies.Select(c => new CompanyResponseDto
             {
                 Id = c.Id,
                 Name = c.Name,
-                ContactFullName = $"{c.ContactFirstName} {c.ContactLastName}",
+                CompanyTitle = c.Title,
+                TaxNumber = c.TaxNumber,
                 Email = c.Email,
-                CreatedAt = c.CreatedAt
+                ContactFullName = $"{c.ContactFirstName} {c.ContactLastName}",
+                ContactPosition = c.ContactPosition,
+                ContactPhone = c.ContactPhone,
+                ContactEmail = c.ContactEmail,
+                ItResponsibleName = c.ItResponsibleName,
+                ItResponsiblePhone = c.ItResponsiblePhone,
+                ItResponsibleEmail = c.ItResponsibleEmail,
+                ProductionCapacity = c.ProductionCapacity,
+                Region = c.Region,
+                PackageType = c.PackageType,
+                ConnectionStatus = c.ConnectionStatus.ToString(),
+                Notes = c.Notes,
+                Status = c.ConnectionStatus.ToString(),
+                ContractPdfPath = c.ContractPath,
+                IsTemplate = false,
+                Images = c.Images?.Select(i => new CompanyImageDto
+                {
+                    Id = i.Id,
+                    FilePath = i.FilePath,
+                    Description = i.Description,
+                    UploadDate = i.UploadDate
+                }).ToList() ?? new List<CompanyImageDto>(),
+                CreatedAt = c.CreatedAt,
+                CreatedByName = c.CreatedBy != null ? $"{c.CreatedBy.FirstName} {c.CreatedBy.LastName}" : null
             });
         }
 
@@ -138,13 +164,38 @@ namespace EndizoomBasvuru.Services
             if (company == null)
                 return null;
 
+            // Şirketin tüm detaylarını içeren zengin bir yanıt oluştur
             return new CompanyResponseDto
             {
                 Id = company.Id,
                 Name = company.Name,
-                ContactFullName = $"{company.ContactFirstName} {company.ContactLastName}",
+                CompanyTitle = company.Title,
+                TaxNumber = company.TaxNumber,
                 Email = company.Email,
-                CreatedAt = company.CreatedAt
+                ContactFullName = $"{company.ContactFirstName} {company.ContactLastName}",
+                ContactPosition = company.ContactPosition,
+                ContactPhone = company.ContactPhone,
+                ContactEmail = company.ContactEmail,
+                ItResponsibleName = company.ItResponsibleName,
+                ItResponsiblePhone = company.ItResponsiblePhone,
+                ItResponsibleEmail = company.ItResponsibleEmail,
+                ProductionCapacity = company.ProductionCapacity,
+                Region = company.Region,
+                PackageType = company.PackageType,
+                ConnectionStatus = company.ConnectionStatus.ToString(),
+                Notes = company.Notes,
+                Status = company.ConnectionStatus.ToString(),
+                ContractPdfPath = company.ContractPath,
+                IsTemplate = false,
+                Images = company.Images?.Select(i => new CompanyImageDto
+                {
+                    Id = i.Id,
+                    FilePath = i.FilePath,
+                    Description = i.Description,
+                    UploadDate = i.UploadDate
+                }).ToList() ?? new List<CompanyImageDto>(),
+                CreatedAt = company.CreatedAt,
+                CreatedByName = company.CreatedBy != null ? $"{company.CreatedBy.FirstName} {company.CreatedBy.LastName}" : null
             };
         }
 
