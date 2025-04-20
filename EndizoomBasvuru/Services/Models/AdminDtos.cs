@@ -33,12 +33,21 @@ namespace EndizoomBasvuru.Services.Models
         [StringLength(50, ErrorMessage = "Soyad 50 karakterden fazla olamaz.")]
         public string LastName { get; set; } = null!;
         
+        [StringLength(20, ErrorMessage = "Telefon numarası 20 karakterden fazla olamaz.")]
+        public string? PhoneNumber { get; set; }
+        
+        [StringLength(20, ErrorMessage = "Şirket numarası 20 karakterden fazla olamaz.")]
+        public string? CompanyNumber { get; set; }
+        
         [Required(ErrorMessage = "Rol gereklidir.")]
         public UserRole Role { get; set; }
         
         [Required(ErrorMessage = "Şifre gereklidir.")]
         [MinLength(6, ErrorMessage = "Şifre en az 6 karakter olmalıdır.")]
         public string Password { get; set; } = null!;
+        
+        [StringLength(1000, ErrorMessage = "Zimmetler 1000 karakterden fazla olamaz.")]
+        public string? Assignments { get; set; }
     }
     
     public class AdminUpdateDto
@@ -60,6 +69,12 @@ namespace EndizoomBasvuru.Services.Models
         [StringLength(50, ErrorMessage = "Soyad 50 karakterden fazla olamaz.")]
         public string LastName { get; set; } = null!;
         
+        [StringLength(20, ErrorMessage = "Telefon numarası 20 karakterden fazla olamaz.")]
+        public string? PhoneNumber { get; set; }
+        
+        [StringLength(20, ErrorMessage = "Şirket numarası 20 karakterden fazla olamaz.")]
+        public string? CompanyNumber { get; set; }
+        
         [Required(ErrorMessage = "Rol gereklidir.")]
         public UserRole Role { get; set; }
         
@@ -72,6 +87,8 @@ namespace EndizoomBasvuru.Services.Models
         public string Username { get; set; } = null!;
         public string Email { get; set; } = null!;
         public string FullName { get; set; } = null!;
+        public string? PhoneNumber { get; set; }
+        public string? CompanyNumber { get; set; }
         public UserRole Role { get; set; }
         public string RoleName => Role.ToString();
         public bool IsAdmin => Role == UserRole.Admin;

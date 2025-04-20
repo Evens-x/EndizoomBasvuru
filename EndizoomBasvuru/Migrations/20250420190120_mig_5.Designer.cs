@@ -3,6 +3,7 @@ using System;
 using EndizoomBasvuru.Data.Context;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace EndizoomBasvuru.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250420190120_mig_5")]
+    partial class mig_5
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -33,10 +36,6 @@ namespace EndizoomBasvuru.Migrations
                     b.Property<string>("Assignments")
                         .HasMaxLength(1000)
                         .HasColumnType("character varying(1000)");
-
-                    b.Property<string>("CompanyNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("timestamp with time zone");
@@ -70,10 +69,6 @@ namespace EndizoomBasvuru.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)");
 
-                    b.Property<string>("PhoneNumber")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
                     b.Property<int>("Role")
                         .HasColumnType("integer");
 
@@ -95,7 +90,7 @@ namespace EndizoomBasvuru.Migrations
                             FirstName = "Endizoom",
                             IsActive = true,
                             LastName = "Administrator",
-                            Password = "$2a$11$UKVZsxy3PZwCCalKvM98zOPp.otFLTwSIkEeUTk1ZRNMGuOGN3oW6",
+                            Password = "$2a$11$hkG4GbtgOaZeYsEYSfIeqO.xaUSOPnu7zcpZfrdAJeljhyOmAfpVi",
                             Role = 1,
                             Username = "superadmin"
                         },
@@ -107,7 +102,7 @@ namespace EndizoomBasvuru.Migrations
                             FirstName = "Endizoom",
                             IsActive = true,
                             LastName = "Marketing",
-                            Password = "$2a$11$FSAATB3r3BEHRxAE4gP1LuMxZe1H99VAWefwFbWgPj9cIccpA7mq2",
+                            Password = "$2a$11$oUBM1y65hqoiVrJNhtHbM.m2Yby1TuB9jMpqCYu8381WeT80a3Utm",
                             Role = 2,
                             Username = "marketing"
                         });

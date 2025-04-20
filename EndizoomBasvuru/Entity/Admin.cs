@@ -28,6 +28,12 @@ namespace EndizoomBasvuru.Entity
         [StringLength(50)]
         public string LastName { get; set; } = null!;
 
+        [StringLength(20)]
+        public string? PhoneNumber { get; set; }
+
+        [StringLength(20)]
+        public string? CompanyNumber { get; set; }
+
         [Required]
         public UserRole Role { get; set; } = UserRole.Admin;
 
@@ -36,5 +42,8 @@ namespace EndizoomBasvuru.Entity
         
         public int? CreatedBy { get; set; }
         public bool IsActive { get; set; } = true;
+        
+        [StringLength(1000)]
+        public string? Assignments { get; set; }
     }
 } 

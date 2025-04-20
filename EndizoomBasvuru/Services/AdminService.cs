@@ -77,6 +77,9 @@ namespace EndizoomBasvuru.Services
                 Email = model.Email,
                 FirstName = model.FirstName,
                 LastName = model.LastName,
+                PhoneNumber = model.PhoneNumber,
+                CompanyNumber = model.CompanyNumber,
+                Assignments = model.Assignments,
                 Password = hashedPassword,
                 Role = model.Role,
                 CreatedAt = DateTime.UtcNow,
@@ -95,6 +98,8 @@ namespace EndizoomBasvuru.Services
                 Username = admin.Username,
                 Email = admin.Email,
                 FullName = $"{admin.FirstName} {admin.LastName}",
+                PhoneNumber = admin.PhoneNumber,
+                CompanyNumber = admin.CompanyNumber,
                 Role = admin.Role,
                 CreatedAt = admin.CreatedAt,
                 IsActive = admin.IsActive
@@ -116,6 +121,8 @@ namespace EndizoomBasvuru.Services
                     Username = a.Username,
                     Email = a.Email,
                     FullName = $"{a.FirstName} {a.LastName}",
+                    PhoneNumber = a.PhoneNumber,
+                    CompanyNumber = a.CompanyNumber,
                     Role = a.Role,
                     CreatedAt = a.CreatedAt,
                     IsActive = a.IsActive,
@@ -136,6 +143,8 @@ namespace EndizoomBasvuru.Services
                 Username = admin.Username,
                 Email = admin.Email,
                 FullName = $"{admin.FirstName} {admin.LastName}",
+                PhoneNumber = admin.PhoneNumber,
+                CompanyNumber = admin.CompanyNumber,
                 Role = admin.Role,
                 CreatedAt = admin.CreatedAt,
                 IsActive = admin.IsActive,
@@ -164,6 +173,8 @@ namespace EndizoomBasvuru.Services
             admin.Email = model.Email;
             admin.FirstName = model.FirstName;
             admin.LastName = model.LastName;
+            admin.PhoneNumber = model.PhoneNumber;
+            admin.CompanyNumber = model.CompanyNumber;
             admin.Role = model.Role;
             admin.IsActive = model.IsActive;
             
@@ -178,6 +189,8 @@ namespace EndizoomBasvuru.Services
                 Username = admin.Username,
                 Email = admin.Email,
                 FullName = $"{admin.FirstName} {admin.LastName}",
+                PhoneNumber = admin.PhoneNumber,
+                CompanyNumber = admin.CompanyNumber,
                 Role = admin.Role,
                 CreatedAt = admin.CreatedAt,
                 IsActive = admin.IsActive,
@@ -233,6 +246,8 @@ namespace EndizoomBasvuru.Services
                 Username = a.Username,
                 Email = a.Email,
                 FullName = $"{a.FirstName} {a.LastName}",
+                PhoneNumber = a.PhoneNumber,
+                CompanyNumber = a.CompanyNumber,
                 Role = a.Role,
                 CreatedAt = a.CreatedAt,
                 IsActive = a.IsActive,
@@ -249,17 +264,22 @@ namespace EndizoomBasvuru.Services
             var admins = await _adminRepository.FindAsync(a => 
                 a.Role == UserRole.Admin || a.Role == UserRole.Marketing);
             
-            return admins.Select(a => new AdminResponseDto
-            {
-                Id = a.Id,
-                Username = a.Username,
-                Email = a.Email,
-                FullName = $"{a.FirstName} {a.LastName}",
-                Role = a.Role,
-                CreatedAt = a.CreatedAt,
-                IsActive = a.IsActive,
-                LastLoginAt = a.LastLoginAt
-            });
+            return admins
+                .OrderBy(a => a.Role) // Önce Admin, sonra Marketing
+                .ThenBy(a => a.FirstName) // Sonra alfabetik
+                .Select(a => new AdminResponseDto
+                {
+                    Id = a.Id,
+                    Username = a.Username,
+                    Email = a.Email,
+                    FullName = $"{a.FirstName} {a.LastName}",
+                    PhoneNumber = a.PhoneNumber,
+                    CompanyNumber = a.CompanyNumber,
+                    Role = a.Role,
+                    CreatedAt = a.CreatedAt,
+                    IsActive = a.IsActive,
+                    LastLoginAt = a.LastLoginAt
+                });
         }
 
         /// <summary>

@@ -324,5 +324,27 @@ namespace EndizoomBasvuru.Controllers
                 return StatusCode(500, new { message = $"Şirketler getirilirken bir hata oluştu: {ex.Message}" });
             }
         }
+
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Marketing)}")]
+        [HttpPut("{id}/update")]
+        public async Task<IActionResult> UpdateCompany(int id, [FromBody] CompanyUpdateDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            int updatedById = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+            if (updatedById == 0)
+                return Unauthorized();
+
+            try
+            {
+                var result = await _companyService.UpdateCompanyAsync(id, model, updatedById);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
     }
 }

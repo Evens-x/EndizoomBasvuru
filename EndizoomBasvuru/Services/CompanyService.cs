@@ -946,15 +946,13 @@ namespace EndizoomBasvuru.Services
         /// <returns>Pazarlama kullanıcısı tarafından eklenmiş şirketlerin listesi</returns>
         public async Task<IEnumerable<CompanyResponseDto>> GetCompaniesByMarketingUserAsync(int marketingUserId)
         {
-            // Pazarlamacının eklediği şirketleri, ilişkili verilerle birlikte getir
+            // Marketing kullanıcısının eklediği şirketleri getir
             var companies = await _companyRepository.GetQueryable()
-                .Where(c => c.CreatedById == marketingUserId)
                 .Include(c => c.CreatedBy)
                 .Include(c => c.Images)
-                .OrderByDescending(c => c.CreatedAt) // En son eklenenler ilk gösterilsin
+                .Where(c => c.CreatedById == marketingUserId)
                 .ToListAsync();
             
-            // Şirketleri ve bağlı verileri içeren daha zengin bir yanıt oluştur
             return companies.Select(c => new CompanyResponseDto
             {
                 Id = c.Id,
@@ -987,6 +985,107 @@ namespace EndizoomBasvuru.Services
                 CreatedAt = c.CreatedAt,
                 CreatedByName = c.CreatedBy != null ? $"{c.CreatedBy.FirstName} {c.CreatedBy.LastName}" : null
             });
+        }
+
+        public async Task<CompanyResponseDto> UpdateCompanyAsync(int companyId, CompanyUpdateDto model, int updatedById)
+        {
+            var companies = await _companyRepository.FindAsync(c => c.Id == companyId);
+            var company = companies.FirstOrDefault();
+
+            if (company == null)
+                throw new KeyNotFoundException("Firma bulunamadı.");
+
+            // Değiştirilecek alanları güncelle (null olmayan alanları)
+            if (model.Name != null)
+                company.Name = model.Name;
+            
+            if (model.ContactFirstName != null)
+                company.ContactFirstName = model.ContactFirstName;
+            
+            if (model.ContactLastName != null)
+                company.ContactLastName = model.ContactLastName;
+            
+            if (model.ContactPosition != null)
+                company.ContactPosition = model.ContactPosition;
+            
+            if (model.ContactPhone != null)
+                company.ContactPhone = model.ContactPhone;
+            
+            if (model.ContactEmail != null)
+                company.ContactEmail = model.ContactEmail;
+            
+            if (model.ItResponsibleName != null)
+                company.ItResponsibleName = model.ItResponsibleName;
+            
+            if (model.ItResponsiblePhone != null)
+                company.ItResponsiblePhone = model.ItResponsiblePhone;
+            
+            if (model.ItResponsibleEmail != null)
+                company.ItResponsibleEmail = model.ItResponsibleEmail;
+            
+            if (model.Title != null)
+                company.Title = model.Title;
+            
+            if (model.TaxNumber != null)
+                company.TaxNumber = model.TaxNumber;
+            
+            if (model.Email != null)
+                company.Email = model.Email;
+            
+            if (model.ProductionCapacity != null)
+                company.ProductionCapacity = model.ProductionCapacity;
+            
+            if (model.Region != null)
+                company.Region = model.Region;
+            
+            if (model.PackageType != null)
+                company.PackageType = model.PackageType;
+            
+            if (model.Notes != null)
+                company.Notes = model.Notes;
+            
+            if (model.Revenue.HasValue)
+                company.Revenue = model.Revenue.Value;
+            
+            if (model.Commission.HasValue)
+                company.Commission = model.Commission.Value;
+            
+            if (model.CommissionRate.HasValue)
+                company.CommissionRate = model.CommissionRate.Value;
+
+            company.UpdatedAt = DateTime.UtcNow;
+            company.UpdatedById = updatedById;
+            
+            await _companyRepository.UpdateAsync(company);
+            await _companyRepository.SaveChangesAsync();
+
+            // Güncellenmiş şirket bilgilerini döndür
+            return new CompanyResponseDto
+            {
+                Id = company.Id,
+                Name = company.Name,
+                CompanyTitle = company.Title,
+                TaxNumber = company.TaxNumber,
+                Email = company.Email,
+                ContactFullName = $"{company.ContactFirstName} {company.ContactLastName}",
+                ContactPosition = company.ContactPosition,
+                ContactPhone = company.ContactPhone,
+                ContactEmail = company.ContactEmail,
+                ItResponsibleName = company.ItResponsibleName,
+                ItResponsiblePhone = company.ItResponsiblePhone,
+                ItResponsibleEmail = company.ItResponsibleEmail,
+                ProductionCapacity = company.ProductionCapacity,
+                Region = company.Region,
+                PackageType = company.PackageType,
+                ConnectionStatus = company.ConnectionStatus.ToString(),
+                Notes = company.Notes,
+                Status = company.ConnectionStatus.ToString(),
+                ContractPdfPath = company.ContractPath,
+                IsTemplate = false,
+                CreatedAt = company.CreatedAt,
+                UpdatedAt = company.UpdatedAt,
+                CreatedByName = company.CreatedBy != null ? $"{company.CreatedBy.FirstName} {company.CreatedBy.LastName}" : null
+            };
         }
 
         #endregion
