@@ -108,6 +108,7 @@ namespace EndizoomBasvuru.Services.Models
         
         // System Fields
         public DateTime CreatedAt { get; set; }
+        public DateTime? UpdatedAt { get; set; }
         public string CreatedByName { get; set; } = null!;
     }
 

@@ -230,21 +230,56 @@ using (var scope = app.Services.CreateScope())
     try
     {
         var dbContext = services.GetRequiredService<ApplicationDbContext>();
-        // Veritabanını ve seed verilerini oluştur
-        dbContext.Database.Migrate();
         
-        // Admin kullanıcılarının zaten var olup olmadığını kontrol et
-        if (!await dbContext.Admins.AnyAsync())
+        // Plesk üzerinde başlangıç hatalarını yakalamak için try-catch içine aldık
+        try {
+            // Veritabanını ve seed verilerini oluştur
+            dbContext.Database.Migrate();
+            
+            // Admin kullanıcılarının zaten var olup olmadığını kontrol et
+            if (!await dbContext.Admins.AnyAsync())
+            {
+                // Eğer admin kullanıcısı yoksa, veri tabanı yeni oluşturulmuş demektir
+                var logger = services.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation("Veritabanı ilk kez oluşturuldu. Temel admin kullanıcıları eklendi.");
+            }
+        }
+        catch (Exception migrationEx)
         {
-            // Eğer admin kullanıcısı yoksa, veri tabanı yeni oluşturulmuş demektir
+            // Plesk'te migration çalışana kadar hata yakalama ve loglama
             var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogInformation("Veritabanı ilk kez oluşturuldu. Temel admin kullanıcıları eklendi.");
+            logger.LogError(migrationEx, "Veritabanı migrationları uygulanırken özel bir hata oluştu: {Message}", migrationEx.Message);
+            
+            // İstisna stacktrace'i de logla
+            logger.LogError("StackTrace: {StackTrace}", migrationEx.StackTrace);
+            
+            // İç istisna varsa onu da logla
+            if (migrationEx.InnerException != null)
+            {
+                logger.LogError("InnerException: {Message}", migrationEx.InnerException.Message);
+                logger.LogError("InnerException StackTrace: {StackTrace}", migrationEx.InnerException.StackTrace);
+            }
+
+            // Hata logs klasörüne de yazılsın
+            File.AppendAllText(
+                Path.Combine(Directory.GetCurrentDirectory(), "logs", "migration-error.log"),
+                $"[{DateTime.Now}] ERROR: {migrationEx.Message}\n{migrationEx.StackTrace}\n\n"
+            );
         }
     }
     catch (Exception ex)
     {
         var logger = services.GetRequiredService<ILogger<Program>>();
-        logger.LogError(ex, "Veritabanı migrationları uygulanırken bir hata oluştu.");
+        logger.LogError(ex, "Veritabanı migrationları uygulanırken bir hata oluştu: {Message}", ex.Message);
+        
+        // Plesk için ek hata bilgisi
+        logger.LogError("StackTrace: {StackTrace}", ex.StackTrace);
+        
+        // Hata logs klasörüne de yazılsın
+        File.AppendAllText(
+            Path.Combine(Directory.GetCurrentDirectory(), "logs", "startup-error.log"),
+            $"[{DateTime.Now}] ERROR: {ex.Message}\n{ex.StackTrace}\n\n"
+        );
     }
 }
 

@@ -121,7 +121,11 @@ namespace EndizoomBasvuru.Services
 
         public async Task<IEnumerable<CompanyResponseDto>> GetAllCompaniesAsync()
         {
-            var companies = await _companyRepository.GetAllAsync();
+            // Include ile ilişkili verileri de getir
+            var companies = await _companyRepository.GetQueryable()
+                .Include(c => c.CreatedBy)
+                .Include(c => c.Images)
+                .ToListAsync();
             
             // Şirketleri ve bağlı verileri içeren daha zengin bir yanıt oluştur
             return companies.Select(c => new CompanyResponseDto
@@ -160,7 +164,11 @@ namespace EndizoomBasvuru.Services
 
         public async Task<CompanyResponseDto?> GetCompanyByIdAsync(int id)
         {
-            var company = await _companyRepository.GetByIdAsync(id);
+            var company = await _companyRepository.GetQueryable()
+                .Include(c => c.CreatedBy)
+                .Include(c => c.Images)
+                .FirstOrDefaultAsync(c => c.Id == id);
+                
             if (company == null)
                 return null;
 
@@ -242,6 +250,11 @@ namespace EndizoomBasvuru.Services
             await _companyRepository.AddAsync(company);
             await _companyRepository.SaveChangesAsync();
 
+            // Şirket kaydedildikten sonra yetkiliyi de içerecek şekilde tekrar getir
+            var savedCompany = await _companyRepository.GetQueryable()
+                .Include(c => c.CreatedBy)
+                .FirstOrDefaultAsync(c => c.Id == company.Id);
+
             // Upload contract if exists
             if (model.ContractPdf != null)
             {
@@ -289,7 +302,7 @@ namespace EndizoomBasvuru.Services
                 ConnectionStatus = company.ConnectionStatus.ToString(),
                 Notes = company.Notes,
                 CreatedAt = company.CreatedAt,
-                CreatedByName = company.CreatedById.HasValue ? "Admin" : null
+                CreatedByName = savedCompany.CreatedBy != null ? $"{savedCompany.CreatedBy.FirstName} {savedCompany.CreatedBy.LastName}" : null
             };
         }
 
@@ -313,26 +326,36 @@ namespace EndizoomBasvuru.Services
             company.ProductionCapacity = model.ProductionCapacity;
             company.Region = model.Region;
             company.PackageType = model.PackageType;
+            company.UpdatedAt = DateTime.UtcNow;
 
             await _companyRepository.UpdateAsync(company);
             await _companyRepository.SaveChangesAsync();
+
+            // Güncellenmiş firmayı ilişkili verilerle birlikte getir
+            var updatedCompany = await _companyRepository.GetQueryable()
+                .Include(c => c.CreatedBy)
+                .FirstOrDefaultAsync(c => c.Id == companyId);
 
             return new CompanyResponseDto
             {
                 Id = company.Id,
                 Name = company.Name,
                 CompanyTitle = company.Title,
+                TaxNumber = company.TaxNumber,
+                Email = company.Email,
                 ContactFullName = $"{company.ContactFirstName} {company.ContactLastName}",
                 ContactPosition = company.ContactPosition,
                 ContactPhone = company.ContactPhone,
+                ContactEmail = company.ContactEmail,
                 ItResponsibleName = company.ItResponsibleName,
                 ItResponsiblePhone = company.ItResponsiblePhone,
                 ItResponsibleEmail = company.ItResponsibleEmail,
                 ProductionCapacity = company.ProductionCapacity,
                 Region = company.Region,
                 PackageType = company.PackageType,
-                Email = company.Email,
-                CreatedAt = company.CreatedAt
+                CreatedAt = company.CreatedAt,
+                UpdatedAt = company.UpdatedAt,
+                CreatedByName = updatedCompany.CreatedBy != null ? $"{updatedCompany.CreatedBy.FirstName} {updatedCompany.CreatedBy.LastName}" : null
             };
         }
 
@@ -497,9 +520,17 @@ namespace EndizoomBasvuru.Services
                 company.Notes = model.Notes;
             }
             
+            // Güncelleyen kişiyi ekle
+            company.UpdatedAt = DateTime.UtcNow;
+            
             // Güncelleme için veritabanını güncelle
             await _companyRepository.UpdateAsync(company);
             await _companyRepository.SaveChangesAsync();
+            
+            // Firma bilgilerini ilişkili verilerle birlikte al
+            var updatedCompany = await _companyRepository.GetQueryable()
+                .Include(c => c.CreatedBy)
+                .FirstOrDefaultAsync(c => c.Id == companyId);
             
             // DTO olarak güncel şirket bilgilerini döndür
             return new CompanyResponseDto
@@ -510,17 +541,20 @@ namespace EndizoomBasvuru.Services
                 TaxNumber = company.TaxNumber,
                 Email = company.Email,
                 Status = company.ConnectionStatus.ToString(),
-                CreatedAt = company.CreatedAt
+                ConnectionStatus = company.ConnectionStatus.ToString(),
+                Notes = company.Notes,
+                CreatedAt = company.CreatedAt,
+                CreatedByName = updatedCompany.CreatedBy != null ? $"{updatedCompany.CreatedBy.FirstName} {updatedCompany.CreatedBy.LastName}" : null
             };
         }
 
         public async Task<IEnumerable<CompanyResponseDto>> FilterCompaniesAsync(CompanyFilterDto filter)
         {
-            // Tüm şirketleri al
-            var allCompanies = await _companyRepository.GetAllAsync();
-            
-            // Filtrelemeyi yap
-            var query = allCompanies.AsQueryable();
+            // Şirketleri ilişkili verilerle birlikte getir
+            var query = _companyRepository.GetQueryable()
+                .Include(c => c.CreatedBy)
+                .Include(c => c.Images)
+                .AsQueryable();
             
             // İsim filtresi
             if (!string.IsNullOrEmpty(filter.Name))
@@ -569,9 +603,12 @@ namespace EndizoomBasvuru.Services
                 // CreatedById olan şirketleri filtreliyoruz
                 query = query.Where(c => c.CreatedById.HasValue);
             }
+
+            // Sonuçları getir
+            var companies = await query.ToListAsync();
             
             // Sonuçları dönüştür
-            return query.Select(c => new CompanyResponseDto
+            return companies.Select(c => new CompanyResponseDto
             {
                 Id = c.Id,
                 Name = c.Name,
@@ -579,11 +616,29 @@ namespace EndizoomBasvuru.Services
                 TaxNumber = c.TaxNumber,
                 Email = c.Email,
                 ContactFullName = $"{c.ContactFirstName} {c.ContactLastName}",
+                ContactPosition = c.ContactPosition,
+                ContactPhone = c.ContactPhone,
+                ContactEmail = c.ContactEmail,
+                ItResponsibleName = c.ItResponsibleName,
+                ItResponsiblePhone = c.ItResponsiblePhone,
+                ItResponsibleEmail = c.ItResponsibleEmail,
+                ProductionCapacity = c.ProductionCapacity,
+                Region = c.Region,
+                PackageType = c.PackageType,
                 Status = c.ConnectionStatus.ToString(),
                 ConnectionStatus = c.ConnectionStatus.ToString(),
-                Region = c.Region,
+                Notes = c.Notes,
+                ContractPdfPath = c.ContractPath,
+                IsTemplate = false,
+                Images = c.Images?.Select(i => new CompanyImageDto
+                {
+                    Id = i.Id,
+                    FilePath = i.FilePath,
+                    Description = i.Description,
+                    UploadDate = i.UploadDate
+                }).ToList() ?? new List<CompanyImageDto>(),
                 CreatedAt = c.CreatedAt,
-                CreatedByName = c.CreatedById.HasValue ? "Admin" : null
+                CreatedByName = c.CreatedBy != null ? $"{c.CreatedBy.FirstName} {c.CreatedBy.LastName}" : null
             });
         }
 
