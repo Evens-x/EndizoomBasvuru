@@ -5,6 +5,7 @@ using EndizoomBasvuru.Services.Interfaces;
 using EndizoomBasvuru.Services.Models;
 using EndizoomBasvuru.Entity;
 using System.Security.Claims;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EndizoomBasvuru.Controllers
 {
@@ -111,6 +112,114 @@ namespace EndizoomBasvuru.Controllers
                 return BadRequest(new { message = "Mevcut şifre yanlış." });
 
             return Ok(new { message = "Şifre başarıyla değiştirildi." });
+        }
+
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Marketing)}")]
+        [HttpGet("by-role/{role}")]
+        public async Task<IActionResult> GetAdminsByRole(string role)
+        {
+            if (!Enum.TryParse<UserRole>(role, true, out var userRole))
+            {
+                return BadRequest(new { message = "Geçersiz rol değeri." });
+            }
+
+            var admins = await _adminService.GetAdminsByRoleAsync(userRole);
+            return Ok(admins);
+        }
+
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Marketing)}")]
+        [HttpGet("admin-and-marketing")]
+        public async Task<IActionResult> GetAdminAndMarketingUsers()
+        {
+            var users = await _adminService.GetAdminAndMarketingUsersAsync();
+            return Ok(users);
+        }
+        
+        /// <summary>
+        /// Admin'in yetkilendirmesi ile yönetici aktiflik durumunu (aktif/pasif) değiştirir
+        /// </summary>
+        [Authorize(Roles = nameof(UserRole.Admin))]
+        [HttpPut("{id}/status")]
+        public async Task<IActionResult> UpdateAdminStatus(int id, [FromBody] AdminStatusUpdateDto model)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            try
+            {
+                var result = await _adminService.UpdateAdminStatusAsync(id, model);
+                return Ok(result);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+        
+        /// <summary>
+        /// Belirli bir pazarlama kullanıcısının istatistiklerini gösterir
+        /// </summary>
+        [Authorize(Roles = nameof(UserRole.Admin))]
+        [HttpGet("marketing/{id}/stats")]
+        public async Task<IActionResult> GetMarketingUserStats(int id, [FromQuery] DateTime? date = null)
+        {
+            try
+            {
+                var stats = await _adminService.GetMarketingUserStatsAsync(id, date);
+                return Ok(stats);
+            }
+            catch (KeyNotFoundException ex)
+            {
+                return NotFound(new { message = ex.Message });
+            }
+        }
+        
+        /// <summary>
+        /// Tüm pazarlama kullanıcılarının istatistiklerini gösterir
+        /// </summary>
+        [Authorize(Roles = nameof(UserRole.Admin))]
+        [HttpGet("marketing/stats")]
+        public async Task<IActionResult> GetAllMarketingUsersStats([FromQuery] DateTime? date = null)
+        {
+            var stats = await _adminService.GetAllMarketingUsersStatsAsync(date);
+            return Ok(stats);
+        }
+        
+        /// <summary>
+        /// Belirli bir pazarlama kullanıcısının eklediği şirketleri gösterir
+        /// </summary>
+        [Authorize(Roles = nameof(UserRole.Admin))]
+        [HttpGet("marketing/{id}/companies")]
+        public async Task<IActionResult> GetMarketingUserCompanies(int id)
+        {
+            try
+            {
+                // Önce kullanıcının Marketing rolüne sahip olup olmadığını kontrol et
+                var admin = await _adminService.GetAdminByIdAsync(id);
+                if (admin == null)
+                {
+                    return NotFound(new { message = "Kullanıcı bulunamadı." });
+                }
+                
+                if (admin.Role != UserRole.Marketing)
+                {
+                    return BadRequest(new { message = "Bu kullanıcı bir pazarlama kullanıcısı değil." });
+                }
+                
+                // CompanyService'i enjekte et ve pazarlamacının şirketlerini getir
+                var companyService = HttpContext.RequestServices.GetService<ICompanyService>();
+                if (companyService == null)
+                {
+                    return StatusCode(500, new { message = "Servis kullanılamıyor." });
+                }
+                
+                var companies = await companyService.GetCompaniesByMarketingUserAsync(id);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Şirketler getirilirken bir hata oluştu: {ex.Message}" });
+            }
         }
     }
 }

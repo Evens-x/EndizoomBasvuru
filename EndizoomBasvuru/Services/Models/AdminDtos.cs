@@ -11,6 +11,7 @@ namespace EndizoomBasvuru.Services.Models
         public string FullName { get; set; } = null!;
         public string Token { get; set; } = null!;
         public UserRole Role { get; set; }
+        public bool IsActive { get; set; }
     }
     
     public class AdminRegisterDto
@@ -61,6 +62,8 @@ namespace EndizoomBasvuru.Services.Models
         
         [Required(ErrorMessage = "Rol gereklidir.")]
         public UserRole Role { get; set; }
+        
+        public bool IsActive { get; set; } = true;
     }
     
     public class AdminResponseDto
@@ -70,6 +73,49 @@ namespace EndizoomBasvuru.Services.Models
         public string Email { get; set; } = null!;
         public string FullName { get; set; } = null!;
         public UserRole Role { get; set; }
+        public string RoleName => Role.ToString();
+        public bool IsAdmin => Role == UserRole.Admin;
+        public bool IsMarketing => Role == UserRole.Marketing;
         public DateTime CreatedAt { get; set; }
+        public bool IsActive { get; set; }
+        public DateTime? LastLoginAt { get; set; }
+    }
+    
+    // Admin durum değiştirme DTO
+    public class AdminStatusUpdateDto
+    {
+        [Required(ErrorMessage = "Aktiflik durumu gereklidir.")]
+        public bool IsActive { get; set; }
+    }
+
+    // Pazarlamacı istatistikleri
+    public class MarketingUserStatsDto
+    {
+        public int AdminId { get; set; }
+        public string FullName { get; set; } = null!;
+        public string Email { get; set; } = null!;
+        public bool IsActive { get; set; }
+        
+        // Toplam istatistikler
+        public int TotalCompanies { get; set; }
+        public int TotalActiveCompanies { get; set; }
+        public int TotalRejectedCompanies { get; set; }
+        public int TotalPendingCompanies { get; set; }
+        
+        // Günlük istatistikler
+        public int DailyCompanies { get; set; }
+        public int DailyActiveCompanies { get; set; }
+        public int DailyRejectedCompanies { get; set; }
+        
+        // Aylık istatistikler
+        public int MonthlyCompanies { get; set; }
+        public int MonthlyActiveCompanies { get; set; }
+        public int MonthlyRejectedCompanies { get; set; }
+    }
+    
+    // İstatistik periyodu için DTO
+    public class StatPeriodDto
+    {
+        public DateTime? Date { get; set; }
     }
 } 

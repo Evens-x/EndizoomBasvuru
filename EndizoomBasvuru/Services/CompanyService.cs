@@ -559,13 +559,15 @@ namespace EndizoomBasvuru.Services
             // İsim filtresi
             if (!string.IsNullOrEmpty(filter.Name))
             {
-                query = query.Where(c => c.Name.Contains(filter.Name, StringComparison.OrdinalIgnoreCase));
+                var name = filter.Name.ToLower();
+                query = query.Where(c => c.Name != null && c.Name.ToLower().Contains(name));
             }
             
             // Bölge filtresi
             if (!string.IsNullOrEmpty(filter.Region))
             {
-                query = query.Where(c => c.Region == filter.Region);
+                var region = filter.Region.ToLower();
+                query = query.Where(c => c.Region != null && c.Region.ToLower().Contains(region));
             }
             
             // Bağlantı durumu filtresi
@@ -602,6 +604,102 @@ namespace EndizoomBasvuru.Services
             {
                 // CreatedById olan şirketleri filtreliyoruz
                 query = query.Where(c => c.CreatedById.HasValue);
+            }
+            
+            // Vergi numarası filtresi
+            if (!string.IsNullOrEmpty(filter.TaxNumber))
+            {
+                var taxNumber = filter.TaxNumber.ToLower();
+                query = query.Where(c => c.TaxNumber != null && c.TaxNumber.ToLower().Contains(taxNumber));
+            }
+            
+            // Yetkili kişi filtresi
+            if (!string.IsNullOrEmpty(filter.ContactPerson))
+            {
+                var contactPerson = filter.ContactPerson.ToLower();
+                query = query.Where(c => 
+                    (c.ContactFirstName != null && c.ContactFirstName.ToLower().Contains(contactPerson)) || 
+                    (c.ContactLastName != null && c.ContactLastName.ToLower().Contains(contactPerson))
+                );
+            }
+
+            // Şirket ünvanı filtresi
+            if (!string.IsNullOrEmpty(filter.CompanyTitle))
+            {
+                var title = filter.CompanyTitle.ToLower();
+                query = query.Where(c => c.Title != null && c.Title.ToLower().Contains(title));
+            }
+
+            // E-posta filtresi
+            if (!string.IsNullOrEmpty(filter.Email))
+            {
+                var email = filter.Email.ToLower();
+                query = query.Where(c => c.Email.ToLower().Contains(email));
+            }
+
+            // İletişim e-posta filtresi
+            if (!string.IsNullOrEmpty(filter.ContactEmail))
+            {
+                var contactEmail = filter.ContactEmail.ToLower();
+                query = query.Where(c => c.ContactEmail != null && c.ContactEmail.ToLower().Contains(contactEmail));
+            }
+
+            // İletişim telefon filtresi
+            if (!string.IsNullOrEmpty(filter.ContactPhone))
+            {
+                var contactPhone = filter.ContactPhone.ToLower();
+                query = query.Where(c => c.ContactPhone != null && c.ContactPhone.ToLower().Contains(contactPhone));
+            }
+
+            // Paket tipi filtresi
+            if (!string.IsNullOrEmpty(filter.PackageType))
+            {
+                var packageType = filter.PackageType.ToLower();
+                query = query.Where(c => c.PackageType != null && c.PackageType.ToLower().Contains(packageType));
+            }
+
+            // Minimum ciro filtresi
+            if (filter.MinRevenue.HasValue)
+            {
+                query = query.Where(c => c.Revenue >= filter.MinRevenue.Value);
+            }
+
+            // Maksimum ciro filtresi
+            if (filter.MaxRevenue.HasValue)
+            {
+                query = query.Where(c => c.Revenue <= filter.MaxRevenue.Value);
+            }
+
+            // Sözleşmesi olan/olmayan firmalar
+            if (filter.HasContract.HasValue)
+            {
+                if (filter.HasContract.Value)
+                {
+                    query = query.Where(c => c.ContractPath != null && c.ContractPath != "");
+                }
+                else
+                {
+                    query = query.Where(c => c.ContractPath == null || c.ContractPath == "");
+                }
+            }
+
+            // Görseli olan/olmayan firmalar
+            if (filter.HasImages.HasValue)
+            {
+                if (filter.HasImages.Value)
+                {
+                    query = query.Where(c => c.Images.Any());
+                }
+                else
+                {
+                    query = query.Where(c => !c.Images.Any());
+                }
+            }
+
+            // Belirli bir tarihten sonra güncellenen firmalar
+            if (filter.UpdatedAfter.HasValue)
+            {
+                query = query.Where(c => c.UpdatedAt.HasValue && c.UpdatedAt.Value >= filter.UpdatedAfter.Value);
             }
 
             // Sonuçları getir
@@ -839,6 +937,56 @@ namespace EndizoomBasvuru.Services
             };
 
             return result;
+        }
+
+        /// <summary>
+        /// Belirtilen pazarlama kullanıcısı tarafından eklenmiş tüm şirketleri döndürür
+        /// </summary>
+        /// <param name="marketingUserId">Pazarlama kullanıcısının ID'si</param>
+        /// <returns>Pazarlama kullanıcısı tarafından eklenmiş şirketlerin listesi</returns>
+        public async Task<IEnumerable<CompanyResponseDto>> GetCompaniesByMarketingUserAsync(int marketingUserId)
+        {
+            // Pazarlamacının eklediği şirketleri, ilişkili verilerle birlikte getir
+            var companies = await _companyRepository.GetQueryable()
+                .Where(c => c.CreatedById == marketingUserId)
+                .Include(c => c.CreatedBy)
+                .Include(c => c.Images)
+                .OrderByDescending(c => c.CreatedAt) // En son eklenenler ilk gösterilsin
+                .ToListAsync();
+            
+            // Şirketleri ve bağlı verileri içeren daha zengin bir yanıt oluştur
+            return companies.Select(c => new CompanyResponseDto
+            {
+                Id = c.Id,
+                Name = c.Name,
+                CompanyTitle = c.Title,
+                TaxNumber = c.TaxNumber,
+                Email = c.Email,
+                ContactFullName = $"{c.ContactFirstName} {c.ContactLastName}",
+                ContactPosition = c.ContactPosition,
+                ContactPhone = c.ContactPhone,
+                ContactEmail = c.ContactEmail,
+                ItResponsibleName = c.ItResponsibleName,
+                ItResponsiblePhone = c.ItResponsiblePhone,
+                ItResponsibleEmail = c.ItResponsibleEmail,
+                ProductionCapacity = c.ProductionCapacity,
+                Region = c.Region,
+                PackageType = c.PackageType,
+                ConnectionStatus = c.ConnectionStatus.ToString(),
+                Notes = c.Notes,
+                Status = c.ConnectionStatus.ToString(),
+                ContractPdfPath = c.ContractPath,
+                IsTemplate = false,
+                Images = c.Images?.Select(i => new CompanyImageDto
+                {
+                    Id = i.Id,
+                    FilePath = i.FilePath,
+                    Description = i.Description,
+                    UploadDate = i.UploadDate
+                }).ToList() ?? new List<CompanyImageDto>(),
+                CreatedAt = c.CreatedAt,
+                CreatedByName = c.CreatedBy != null ? $"{c.CreatedBy.FirstName} {c.CreatedBy.LastName}" : null
+            });
         }
 
         #endregion

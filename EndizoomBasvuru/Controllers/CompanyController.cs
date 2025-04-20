@@ -65,7 +65,8 @@ namespace EndizoomBasvuru.Controllers
             return Ok(result);
         }
 
-        [Authorize(Roles = nameof(UserRole.Company))]
+
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Company)},{nameof(UserRole.Marketing)}")]
         [HttpPut("change-password")]
         public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto model)
         {
@@ -83,7 +84,7 @@ namespace EndizoomBasvuru.Controllers
             return Ok(new { message = "Şifre başarıyla değiştirildi." });
         }
 
-        [Authorize(Roles = nameof(UserRole.Company))]
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Company)},{nameof(UserRole.Marketing)}")]
         [HttpGet("profile")]
         public async Task<IActionResult> GetProfile()
         {
@@ -98,7 +99,7 @@ namespace EndizoomBasvuru.Controllers
             return Ok(profile);
         }
 
-        [Authorize(Roles = nameof(UserRole.Company))]
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Company)},{nameof(UserRole.Marketing)}")]
         [HttpPut("profile")]
         public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto model)
         {
@@ -121,6 +122,7 @@ namespace EndizoomBasvuru.Controllers
         }
 
         [Authorize(Policy = "AdminOrMarketing")]
+
         [HttpGet("Get-All-Companies")]
         public async Task<IActionResult> GetAllCompanies()
         {
@@ -131,8 +133,8 @@ namespace EndizoomBasvuru.Controllers
             var companies = await _companyService.GetAllCompaniesAsync();
             return Ok(companies);
         }
-        
-        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Marketing)}")]
+
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Company)},{nameof(UserRole.Marketing)}")]
         [HttpGet("filter")]
         public async Task<IActionResult> FilterCompanies([FromQuery] CompanyFilterDto filter)
         {
@@ -140,7 +142,7 @@ namespace EndizoomBasvuru.Controllers
             return Ok(companies);
         }
 
-        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Marketing)}")]
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Company)},{nameof(UserRole.Marketing)}")]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetCompanyById(int id)
         {
@@ -150,8 +152,8 @@ namespace EndizoomBasvuru.Controllers
 
             return Ok(company);
         }
-        
-        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Marketing)}")]
+
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Company)},{nameof(UserRole.Marketing)}")]
         [HttpPut("{id}/status")]
         public async Task<IActionResult> UpdateCompanyStatus(int id, [FromBody] CompanyStatusUpdateDto model)
         {
@@ -180,7 +182,7 @@ namespace EndizoomBasvuru.Controllers
             public string? Description { get; set; }
         }
 
-        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Marketing)}")]
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Company)},{nameof(UserRole.Marketing)}")]
         [HttpPost("{id}/images")]
         public async Task<IActionResult> AddCompanyImageByAdmin(int id, [FromForm] CompanyImageUploadDto model)
         {
@@ -205,8 +207,8 @@ namespace EndizoomBasvuru.Controllers
                 return StatusCode(500, new { message = "Resim yüklenirken bir hata oluştu.", error = ex.Message });
             }
         }
-        
-        [Authorize(Roles = nameof(UserRole.Company))]
+
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Company)},{nameof(UserRole.Marketing)}")]
         [HttpPost("images")]
         public async Task<IActionResult> AddCompanyImage([FromForm] CompanyImageUploadDto model)
         {
@@ -227,8 +229,8 @@ namespace EndizoomBasvuru.Controllers
                 return StatusCode(500, new { message = "Resim yüklenirken bir hata oluştu.", error = ex.Message });
             }
         }
-        
-        [Authorize(Roles = nameof(UserRole.Company))]
+
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Company)},{nameof(UserRole.Marketing)}")]
         [HttpDelete("images/{id}")]
         public async Task<IActionResult> DeleteCompanyImage(int id)
         {
@@ -249,7 +251,7 @@ namespace EndizoomBasvuru.Controllers
             public IFormFile Contract { get; set; } = null!;
         }
 
-        [Authorize(Roles = nameof(UserRole.Company))]
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Company)},{nameof(UserRole.Marketing)}")]
         [HttpPost("contract")]
         public async Task<IActionResult> UploadContract([FromForm] ContractUploadDto model)
         {
@@ -268,6 +270,58 @@ namespace EndizoomBasvuru.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { message = "Sözleşme yüklenirken bir hata oluştu.", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Belirli bir pazarlama kullanıcısı tarafından eklenmiş şirketleri getirir
+        /// </summary>
+        /// <param name="marketingUserId">Pazarlama kullanıcısının ID'si</param>
+        /// <returns>Pazarlama kullanıcısı tarafından eklenmiş şirketlerin listesi</returns>
+        [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Marketing)}")]
+        [HttpGet("by-marketing-user/{marketingUserId}")]
+        public async Task<IActionResult> GetCompaniesByMarketingUser(int marketingUserId)
+        {
+            try
+            {
+                // Kullanıcı kendi rolü Marketing ise, sadece kendi eklediği şirketleri görebilir
+                string? userRoleValue = User.FindFirst(ClaimTypes.Role)?.Value;
+                int currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                
+                if (userRoleValue == UserRole.Marketing.ToString() && currentUserId != marketingUserId)
+                {
+                    return Forbid("Sadece kendi eklediğiniz şirketleri görüntüleyebilirsiniz.");
+                }
+                
+                var companies = await _companyService.GetCompaniesByMarketingUserAsync(marketingUserId);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Şirketler getirilirken bir hata oluştu: {ex.Message}" });
+            }
+        }
+        
+        /// <summary>
+        /// Giriş yapmış pazarlama kullanıcısının eklediği şirketleri getirir
+        /// </summary>
+        /// <returns>Giriş yapmış pazarlama kullanıcısının eklediği şirketlerin listesi</returns>
+        [Authorize(Roles = nameof(UserRole.Marketing))]
+        [HttpGet("my-companies")]
+        public async Task<IActionResult> GetMyCompanies()
+        {
+            try
+            {
+                int currentUserId = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
+                if (currentUserId == 0)
+                    return Unauthorized();
+                
+                var companies = await _companyService.GetCompaniesByMarketingUserAsync(currentUserId);
+                return Ok(companies);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = $"Şirketler getirilirken bir hata oluştu: {ex.Message}" });
             }
         }
     }

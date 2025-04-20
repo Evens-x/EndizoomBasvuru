@@ -213,6 +213,18 @@ namespace EndizoomBasvuru.Services.Models
         public DateTime? FromDate { get; set; }
         public DateTime? ToDate { get; set; }
         public string? CreatedBy { get; set; }
+        public string? TaxNumber { get; set; }
+        public string? ContactPerson { get; set; }
+        public string? CompanyTitle { get; set; }
+        public string? Email { get; set; }
+        public string? ContactEmail { get; set; }
+        public string? ContactPhone { get; set; }
+        public string? PackageType { get; set; }
+        public decimal? MinRevenue { get; set; }
+        public decimal? MaxRevenue { get; set; }
+        public bool? HasContract { get; set; }
+        public bool? HasImages { get; set; }
+        public DateTime? UpdatedAfter { get; set; }
     }
     
     // Company Status Update DTO

@@ -28,5 +28,8 @@ namespace EndizoomBasvuru.Services.Interfaces
         Task<RecentCompaniesDto> GetRecentCompaniesAsync(int count = 10);
         Task<RecentCompaniesDto> GetNewCompaniesAsync(int days = 7, int count = 10);
         Task<PendingCompaniesDto> GetPendingCompaniesAsync(int count = 10);
+        
+        // Pazarlamacının eklediği şirketleri getiren yeni metot
+        Task<IEnumerable<CompanyResponseDto>> GetCompaniesByMarketingUserAsync(int marketingUserId);
     }
 } 

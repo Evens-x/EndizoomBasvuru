@@ -35,5 +35,6 @@ namespace EndizoomBasvuru.Entity
         public DateTime? LastLoginAt { get; set; }
         
         public int? CreatedBy { get; set; }
+        public bool IsActive { get; set; } = true;
     }
 } 

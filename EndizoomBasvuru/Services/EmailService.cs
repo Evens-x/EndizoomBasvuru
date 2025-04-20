@@ -34,6 +34,7 @@ namespace EndizoomBasvuru.Services
                 <strong>Şifre:</strong> {password}</p>
                 <p style='color: red; font-weight: bold;'>Lütfen güvenliğiniz için en kısa sürede şifrenizi değiştirmeyi unutmayınız!</p>
                 <p>Şifrenizi değiştirmek için, sisteme giriş yaptıktan sonra profil sayfanızdan şifre değiştirme işlemini gerçekleştirebilirsiniz.</p>
+                <p>Sisteme giriş yapmak için <a href='https://basvuru.endizoom.com/' style='color: #007bff; font-weight: bold;'>buraya tıklayınız</a></p>
                 <p>Saygılarımızla,<br>Endizoom Ekibi</p>"
             };
 

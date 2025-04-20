@@ -1,3 +1,4 @@
+using EndizoomBasvuru.Entity;
 using EndizoomBasvuru.Services.Models;
 
 namespace EndizoomBasvuru.Services.Interfaces
@@ -11,5 +12,12 @@ namespace EndizoomBasvuru.Services.Interfaces
         Task<AdminResponseDto> UpdateAdminAsync(int id, AdminUpdateDto model);
         Task<bool> DeleteAdminAsync(int id);
         Task<bool> ChangePasswordAsync(int adminId, ChangePasswordDto model);
+        Task<IEnumerable<AdminResponseDto>> GetAdminsByRoleAsync(UserRole role);
+        Task<IEnumerable<AdminResponseDto>> GetAdminAndMarketingUsersAsync();
+        
+        // Yeni metotlar
+        Task<AdminResponseDto> UpdateAdminStatusAsync(int id, AdminStatusUpdateDto model);
+        Task<MarketingUserStatsDto> GetMarketingUserStatsAsync(int userId, DateTime? date = null);
+        Task<IEnumerable<MarketingUserStatsDto>> GetAllMarketingUsersStatsAsync(DateTime? date = null);
     }
 } 
