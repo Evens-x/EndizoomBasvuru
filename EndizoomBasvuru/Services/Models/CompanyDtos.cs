@@ -78,7 +78,7 @@ namespace EndizoomBasvuru.Services.Models
         /// </summary>
         public IFormFile[]? Images { get; set; }
         
-        public bool IsTemplate { get; set; } = false;
+        public bool IsTemplate { get; set; }
     }
 
     // Company Response DTO
@@ -111,7 +111,7 @@ namespace EndizoomBasvuru.Services.Models
         
         // Contract & Images
         public string ContractPdfPath { get; set; } = null!;
-        public bool IsTemplate { get; set; } = false;
+        public bool IsTemplate { get; set; }
         public List<CompanyImageDto> Images { get; set; } = new List<CompanyImageDto>();
         
         // System Fields

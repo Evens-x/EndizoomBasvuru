@@ -354,5 +354,21 @@ namespace EndizoomBasvuru.Controllers
                 return NotFound(new { message = ex.Message });
             }
         }
+
+
+        
+
+        private string GetContentType(string fileExtension)
+        {
+            switch (fileExtension.ToLower())
+            {
+                case ".pdf": return "application/pdf";
+                case ".jpg":
+                case ".jpeg": return "image/jpeg";
+                case ".png": return "image/png";
+                // diğer dosya tipleri için
+                default: return "application/octet-stream";
+            }
+        }
     }
 }
