@@ -87,6 +87,9 @@ namespace EndizoomBasvuru.Entity
         public string? ContractPath { get; set; }
         public string? VisualPath { get; set; }
 
+        [StringLength(100)]
+        public string IsTemplate { get; set; } = string.Empty;
+
         public List<Document> Documents { get; set; } = new();
 
         // Company Images
