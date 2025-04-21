@@ -211,7 +211,7 @@ namespace EndizoomBasvuru.Services
         {
             return await GetCompanyByIdAsync(companyId);
         }
-
+        
         public async Task<CompanyResponseDto> RegisterCompanyAsync(CompanyRegisterDto model, int createdById)
         {
             // Generate a random password

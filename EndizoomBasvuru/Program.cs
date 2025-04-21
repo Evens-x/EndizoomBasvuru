@@ -15,6 +15,8 @@ using System.Net;
 using Microsoft.Extensions.Logging;
 using Swashbuckle.AspNetCore.SwaggerUI;
 using System.Security.Claims;
+using System.Reflection;
+using EndizoomBasvuru.Swagger;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -155,51 +157,23 @@ builder.Services.AddCors(options =>
     });
 });
 
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
+// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
-// Swagger'ı .NET 9 için yapılandırma
-builder.Services.AddSwaggerGen(c =>
+builder.Services.AddSwaggerGen(c => 
 {
-    c.SwaggerDoc("v1", new OpenApiInfo { 
-        Title = "Endizoom API", 
-        Version = "v1",
-        Description = "Endizoom firma başvuru ve belge yönetim API'si"
-    });
+    c.SwaggerDoc("v1", new OpenApiInfo { Title = "Endizoom API", Version = "v1" });
     
-    // IFormFile sorunu için basitleştirilmiş yaklaşım - binary içerik olarak işle
-    c.MapType<IFormFile>(() => new OpenApiSchema { 
-        Type = "string", 
-        Format = "binary" 
-    });
+    // Use SchemaFilter to help with form data models
+    c.SchemaFilter<SwaggerSchemaFilter>();
     
-    // IFormFile[] için eşleme
-    c.MapType<IFormFile[]>(() => new OpenApiSchema { 
-        Type = "array",
-        Items = new OpenApiSchema { 
-            Type = "string", 
-            Format = "binary" 
-        }
-    });
-    
-    // Form verilerinin doğru bir şekilde işlenmesi için
-    c.CustomSchemaIds(type => type.FullName);
-    
-    // Dosya yükleme API'lerini doğru işleyebilmek için
-    c.DescribeAllParametersInCamelCase();
-    c.SupportNonNullableReferenceTypes();
-    
-    // FormFile için özelleştirilmiş operasyon filtresi
-    c.OperationFilter<SwaggerFileOperationFilter>();
-    
-    // JWT kimlik doğrulaması için Swagger yapılandırması
+    // Add security definitions
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
-        Description = "JWT Authorization header. Sadece token değerini girin, 'Bearer' öneki otomatik eklenecektir.",
+        Description = "JWT Authorization header using the Bearer scheme. Example: \"Authorization: Bearer {token}\"",
         Name = "Authorization",
         In = ParameterLocation.Header,
-        Type = SecuritySchemeType.Http, // Http şeması kullanın 
-        Scheme = "bearer", // Küçük harfle "bearer" şeması tanımlanıyor
-        BearerFormat = "JWT"
+        Type = SecuritySchemeType.ApiKey,
+        Scheme = "Bearer"
     });
 
     c.AddSecurityRequirement(new OpenApiSecurityRequirement
@@ -216,6 +190,11 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
+    
+    // Set the comments path for the Swagger JSON and UI
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
 });
 
 var app = builder.Build();

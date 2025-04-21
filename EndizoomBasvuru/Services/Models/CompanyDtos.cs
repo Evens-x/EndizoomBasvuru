@@ -56,7 +56,7 @@ namespace EndizoomBasvuru.Services.Models
         [EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz.")]
         public string? ItResponsibleEmail { get; set; }
         
-        public string ConnectionStatus { get; set; } = "Beklemede";
+        public string? ConnectionStatus { get; set; } = "Beklemede";
         
         [StringLength(1000)]
         public string? Notes { get; set; }
@@ -68,8 +68,16 @@ namespace EndizoomBasvuru.Services.Models
         public string? CreatedByName { get; set; }
         
         // Contract & Images
+        /// <summary>
+        /// Şirket sözleşme dosyası (PDF, Word, vb.)
+        /// </summary>
         public IFormFile? ContractPdf { get; set; }
+        
+        /// <summary>
+        /// Şirket görselleri (JPG, PNG, vb.)
+        /// </summary>
         public IFormFile[]? Images { get; set; }
+        
         public bool IsTemplate { get; set; } = false;
     }
 
@@ -353,63 +361,64 @@ namespace EndizoomBasvuru.Services.Models
         public string AdminName { get; set; } = string.Empty;
     }
 
+    // Company Update DTO
     public class CompanyUpdateDto
     {
         [StringLength(100, ErrorMessage = "Firma adı 100 karakterden fazla olamaz.")]
         public string? Name { get; set; }
-
+        
         [StringLength(100, ErrorMessage = "İletişim adı 100 karakterden fazla olamaz.")]
         public string? ContactFirstName { get; set; }
-
+        
         [StringLength(100, ErrorMessage = "İletişim soyadı 100 karakterden fazla olamaz.")]
         public string? ContactLastName { get; set; }
-
+        
         [StringLength(100, ErrorMessage = "İletişim pozisyonu 100 karakterden fazla olamaz.")]
         public string? ContactPosition { get; set; }
-
+        
         [StringLength(20, ErrorMessage = "İletişim telefonu 20 karakterden fazla olamaz.")]
         public string? ContactPhone { get; set; }
-
+        
         [StringLength(100, ErrorMessage = "İletişim emaili 100 karakterden fazla olamaz.")]
         [EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz.")]
         public string? ContactEmail { get; set; }
-
+        
         [StringLength(100, ErrorMessage = "IT sorumlusu adı 100 karakterden fazla olamaz.")]
         public string? ItResponsibleName { get; set; }
-
+        
         [StringLength(20, ErrorMessage = "IT sorumlusu telefonu 20 karakterden fazla olamaz.")]
         public string? ItResponsiblePhone { get; set; }
-
+        
         [StringLength(100, ErrorMessage = "IT sorumlusu emaili 100 karakterden fazla olamaz.")]
         [EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz.")]
         public string? ItResponsibleEmail { get; set; }
-
+        
         [StringLength(200, ErrorMessage = "Şirket ünvanı 200 karakterden fazla olamaz.")]
         public string? Title { get; set; }
-
+        
         [StringLength(20, ErrorMessage = "Vergi numarası 20 karakterden fazla olamaz.")]
         public string? TaxNumber { get; set; }
-
+        
         [EmailAddress(ErrorMessage = "Geçerli bir email adresi giriniz.")]
         [StringLength(100, ErrorMessage = "Şirket emaili 100 karakterden fazla olamaz.")]
         public string? Email { get; set; }
-
+        
         [StringLength(50, ErrorMessage = "Üretim kapasitesi 50 karakterden fazla olamaz.")]
         public string? ProductionCapacity { get; set; }
-
+        
         [StringLength(100, ErrorMessage = "Bölge 100 karakterden fazla olamaz.")]
         public string? Region { get; set; }
-
+        
         [StringLength(50, ErrorMessage = "Paket türü 50 karakterden fazla olamaz.")]
         public string? PackageType { get; set; }
-
+        
         [StringLength(1000)]
         public string? Notes { get; set; }
-
+        
         public decimal? Revenue { get; set; } // Net Ciro
-
+        
         public decimal? Commission { get; set; } // Komisyon
-
+        
         public decimal? CommissionRate { get; set; } // Komisyon Oranı (%)
     }
 } 

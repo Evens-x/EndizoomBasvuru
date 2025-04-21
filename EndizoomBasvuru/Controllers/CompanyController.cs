@@ -21,10 +21,18 @@ namespace EndizoomBasvuru.Controllers
 
         [Authorize(Roles = $"{nameof(UserRole.Admin)},{nameof(UserRole.Marketing)}")]
         [HttpPost("register")]
-        public async Task<IActionResult> Register([FromBody] CompanyRegisterDto model)
+        [Consumes("multipart/form-data")]
+        [ProducesResponseType(typeof(CompanyResponseDto), StatusCodes.Status200OK)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(typeof(object), StatusCodes.Status401Unauthorized)]
+        public async Task<IActionResult> Register([FromForm] CompanyRegisterDto model)
         {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
+
+            // E-mail alanı kontrolü (diğer alanlar opsiyonel)
+            if (string.IsNullOrEmpty(model.CompanyEmail))
+                return BadRequest(new { message = "Şirket e-postası zorunludur." });
 
             // Firmayı kaydeden kişinin ID'sini al
             int createdById = int.Parse(User.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? "0");
