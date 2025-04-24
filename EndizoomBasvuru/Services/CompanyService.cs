@@ -194,7 +194,7 @@ namespace EndizoomBasvuru.Services
                 Notes = company.Notes,
                 Status = company.ConnectionStatus.ToString(),
                 ContractPdfPath = company.ContractPath,
-                IsTemplate = string.Empty,
+                IsTemplate = company.IsTemplate,
                 Images = company.Images?.Select(i => new CompanyImageDto
                 {
                     Id = i.Id,
@@ -243,7 +243,8 @@ namespace EndizoomBasvuru.Services
                 Notes = model.Notes,
                 Password = hashedPassword,
                 CreatedAt = DateTime.UtcNow,
-                CreatedById = createdById
+                CreatedById = createdById,
+                IsTemplate = model.IsTemplate
             };
 
             // Save company to database
@@ -302,7 +303,8 @@ namespace EndizoomBasvuru.Services
                 ConnectionStatus = company.ConnectionStatus.ToString(),
                 Notes = company.Notes,
                 CreatedAt = company.CreatedAt,
-                CreatedByName = savedCompany.CreatedBy != null ? $"{savedCompany.CreatedBy.FirstName} {savedCompany.CreatedBy.LastName}" : null
+                CreatedByName = savedCompany.CreatedBy != null ? $"{savedCompany.CreatedBy.FirstName} {savedCompany.CreatedBy.LastName}" : null,
+                IsTemplate = company.IsTemplate
             };
         }
 
@@ -355,7 +357,8 @@ namespace EndizoomBasvuru.Services
                 PackageType = company.PackageType,
                 CreatedAt = company.CreatedAt,
                 UpdatedAt = company.UpdatedAt,
-                CreatedByName = updatedCompany.CreatedBy != null ? $"{updatedCompany.CreatedBy.FirstName} {updatedCompany.CreatedBy.LastName}" : null
+                CreatedByName = updatedCompany.CreatedBy != null ? $"{updatedCompany.CreatedBy.FirstName} {updatedCompany.CreatedBy.LastName}" : null,
+                IsTemplate = company.IsTemplate
             };
         }
 
@@ -544,7 +547,8 @@ namespace EndizoomBasvuru.Services
                 ConnectionStatus = company.ConnectionStatus.ToString(),
                 Notes = company.Notes,
                 CreatedAt = company.CreatedAt,
-                CreatedByName = updatedCompany.CreatedBy != null ? $"{updatedCompany.CreatedBy.FirstName} {updatedCompany.CreatedBy.LastName}" : null
+                CreatedByName = updatedCompany.CreatedBy != null ? $"{updatedCompany.CreatedBy.FirstName} {updatedCompany.CreatedBy.LastName}" : null,
+                IsTemplate = company.IsTemplate
             };
         }
 
@@ -727,7 +731,7 @@ namespace EndizoomBasvuru.Services
                 ConnectionStatus = c.ConnectionStatus.ToString(),
                 Notes = c.Notes,
                 ContractPdfPath = c.ContractPath,
-                IsTemplate = string.Empty,
+                IsTemplate = c.IsTemplate,
                 Images = c.Images?.Select(i => new CompanyImageDto
                 {
                     Id = i.Id,
@@ -974,7 +978,7 @@ namespace EndizoomBasvuru.Services
                 Notes = c.Notes,
                 Status = c.ConnectionStatus.ToString(),
                 ContractPdfPath = c.ContractPath,
-                IsTemplate = string.Empty,
+                IsTemplate = c.IsTemplate,
                 Images = c.Images?.Select(i => new CompanyImageDto
                 {
                     Id = i.Id,
@@ -1081,7 +1085,7 @@ namespace EndizoomBasvuru.Services
                 Notes = company.Notes,
                 Status = company.ConnectionStatus.ToString(),
                 ContractPdfPath = company.ContractPath,
-                IsTemplate = string.Empty,
+                IsTemplate = company.IsTemplate,
                 CreatedAt = company.CreatedAt,
                 UpdatedAt = company.UpdatedAt,
                 CreatedByName = company.CreatedBy != null ? $"{company.CreatedBy.FirstName} {company.CreatedBy.LastName}" : null
