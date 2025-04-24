@@ -77,8 +77,9 @@ namespace EndizoomBasvuru.Services.Models
         /// Şirket görselleri (JPG, PNG, vb.)
         /// </summary>
         public IFormFile[]? Images { get; set; }
+
         
-        public bool IsTemplate { get; set; } = false;
+        public string IsTemplate { get; set; } = string.Empty;
     }
 
     // Company Response DTO

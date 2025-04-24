@@ -27,6 +27,11 @@ namespace EndizoomBasvuru
             if (!hasFormFileParam)
                 return;
 
+            // Örnek özelliği ekle
+            var methodName = context.MethodInfo.Name;
+            if (operation.RequestBody?.Content == null)
+                return;
+                
             // Multipart/form-data content type'ı belirleme
             operation.RequestBody = new OpenApiRequestBody
             {
@@ -35,10 +40,12 @@ namespace EndizoomBasvuru
                     ["multipart/form-data"] = new OpenApiMediaType
                     {
                         Schema = operation.RequestBody?.Content.Values
-                            .FirstOrDefault()?.Schema ?? new OpenApiSchema()
+                            .FirstOrDefault()?.Schema ?? new OpenApiSchema(),
+                        Encoding = GetFormEncodings(context)
                     }
                 },
-                Required = true
+                Required = true,
+                Description = "Dosya yükleme ve form alanları içeren istek"
             };
             
             // Form parametrelerini doğru şekilde yapılandır
@@ -65,6 +72,34 @@ namespace EndizoomBasvuru
                     }
                 }
             }
+        }
+        
+        /// <summary>
+        /// Form alanları için encoding ayarlarını yapılandırır
+        /// </summary>
+        private Dictionary<string, OpenApiEncoding> GetFormEncodings(OperationFilterContext context)
+        {
+            var encodings = new Dictionary<string, OpenApiEncoding>();
+            
+            // Metot parametrelerini analiz et
+            foreach (var parameter in context.MethodInfo.GetParameters())
+            {
+                if (parameter.ParameterType.GetProperties().Any(p => p.PropertyType == typeof(IFormFile) || p.PropertyType == typeof(IFormFile[])))
+                {
+                    foreach (var prop in parameter.ParameterType.GetProperties())
+                    {
+                        if (prop.PropertyType == typeof(IFormFile) || prop.PropertyType == typeof(IFormFile[]))
+                        {
+                            encodings[prop.Name] = new OpenApiEncoding 
+                            { 
+                                ContentType = "multipart/form-data" 
+                            };
+                        }
+                    }
+                }
+            }
+            
+            return encodings;
         }
     }
 } 

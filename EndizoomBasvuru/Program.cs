@@ -166,6 +166,21 @@ builder.Services.AddSwaggerGen(c =>
     // Use SchemaFilter to help with form data models
     c.SchemaFilter<SwaggerSchemaFilter>();
     
+    // Dosya yükleme işlemleri için özel filtre ekle
+    c.OperationFilter<SwaggerFileOperationFilter>();
+    
+    // API metotları için örnek değerler oluşturan filtre
+    c.OperationFilter<SwaggerOperationFilter>();
+    
+    // Örnek değerleri göstermek için
+    c.UseAllOfToExtendReferenceSchemas();
+    c.UseInlineDefinitionsForEnums();
+    
+    // XML yorum dosyasının yolunu belirt
+    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+    c.IncludeXmlComments(xmlPath);
+    
     // Add security definitions
     c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
     {
@@ -190,11 +205,6 @@ builder.Services.AddSwaggerGen(c =>
             Array.Empty<string>()
         }
     });
-    
-    // Set the comments path for the Swagger JSON and UI
-    var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-    var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-    c.IncludeXmlComments(xmlPath);
 });
 
 var app = builder.Build();
