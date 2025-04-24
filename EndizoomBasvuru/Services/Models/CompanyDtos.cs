@@ -112,7 +112,7 @@ namespace EndizoomBasvuru.Services.Models
         
         // Contract & Images
         public string ContractPdfPath { get; set; } = null!;
-        public bool IsTemplate { get; set; } = false;
+        public string IsTemplate { get; set; } = string.Empty;
         public List<CompanyImageDto> Images { get; set; } = new List<CompanyImageDto>();
         
         // System Fields

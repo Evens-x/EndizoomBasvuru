@@ -149,7 +149,7 @@ namespace EndizoomBasvuru.Services
                 Notes = c.Notes,
                 Status = c.ConnectionStatus.ToString(),
                 ContractPdfPath = c.ContractPath,
-                IsTemplate = false,
+                IsTemplate = string.Empty,
                 Images = c.Images?.Select(i => new CompanyImageDto
                 {
                     Id = i.Id,
@@ -194,7 +194,7 @@ namespace EndizoomBasvuru.Services
                 Notes = company.Notes,
                 Status = company.ConnectionStatus.ToString(),
                 ContractPdfPath = company.ContractPath,
-                IsTemplate = false,
+                IsTemplate = string.Empty,
                 Images = company.Images?.Select(i => new CompanyImageDto
                 {
                     Id = i.Id,
@@ -727,7 +727,7 @@ namespace EndizoomBasvuru.Services
                 ConnectionStatus = c.ConnectionStatus.ToString(),
                 Notes = c.Notes,
                 ContractPdfPath = c.ContractPath,
-                IsTemplate = false,
+                IsTemplate = string.Empty,
                 Images = c.Images?.Select(i => new CompanyImageDto
                 {
                     Id = i.Id,
@@ -974,7 +974,7 @@ namespace EndizoomBasvuru.Services
                 Notes = c.Notes,
                 Status = c.ConnectionStatus.ToString(),
                 ContractPdfPath = c.ContractPath,
-                IsTemplate = false,
+                IsTemplate = string.Empty,
                 Images = c.Images?.Select(i => new CompanyImageDto
                 {
                     Id = i.Id,
@@ -1081,7 +1081,7 @@ namespace EndizoomBasvuru.Services
                 Notes = company.Notes,
                 Status = company.ConnectionStatus.ToString(),
                 ContractPdfPath = company.ContractPath,
-                IsTemplate = false,
+                IsTemplate = string.Empty,
                 CreatedAt = company.CreatedAt,
                 UpdatedAt = company.UpdatedAt,
                 CreatedByName = company.CreatedBy != null ? $"{company.CreatedBy.FirstName} {company.CreatedBy.LastName}" : null
